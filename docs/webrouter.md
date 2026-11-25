@@ -1,7 +1,7 @@
 # Optional WebRouter tools
 
 The default remains Gateway/OpenRouter search. Set `DOCS_WEB_PROVIDER=webrouter`
-to replace that tool with [WebRouter](https://github.com/WebContextLayer/webrouter)
+to replace that tool with [WebRouter](https://github.com/Nimbleway/webrouter)
 search and explicit page extraction through its Python stdio MCP server.
 The agent model and conversation storage stay the same.
 
