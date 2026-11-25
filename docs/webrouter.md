@@ -7,8 +7,12 @@ The agent model and conversation storage stay the same.
 
 ## Local setup
 
+The template still needs its [Gateway key and credit](https://mastra.ai/docs/mastra-platform/gateway/quickstart)
+for inference; keyless WebRouter tools do not replace that requirement.
+
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) with `uvx`
-   on PATH and Python 3.11+ available.
+   on PATH. The package requires Python 3.11+; uv normally
+   [downloads a compatible interpreter when needed](https://docs.astral.sh/uv/concepts/python-versions/#installing-a-python-version).
 2. Run `npm install`, copy `.env.example` to `.env`, and set the template's
    Gateway and Turso values. Add:
 
@@ -34,9 +38,11 @@ The agent model and conversation storage stay the same.
    > Find Mastra's MCPClient documentation, read the reference page, and explain
    > how to start a stdio server. Cite the page you read.
 
-Leave `WEB_ROUTER_ENV_FILE` unset for the server's normal credential discovery.
-Its `.env` search includes its working directory and user configuration directory;
-see [WebRouter MCP setup](https://docs.webrouter.net/mcp-server).
+Provider credentials are loaded at startup from `WEB_ROUTER_ENV_FILE` (when set),
+the user configuration directory's `.env`, a remembered credential file, then the
+working directory's `.env`. Earlier sources win per credential; later files only
+fill missing values. An explicit file does not disable the other sources. See
+[WebRouter MCP setup](https://docs.webrouter.net/mcp-server#then-add-whichever-keys-you-have).
 Mastra's subprocess inherits a limited environment, so credentials exported in
 Node are **not** automatically forwarded. Use the credential file for providers
 such as `NIMBLE_API_KEY`, `TAVILY_API_KEY`, or `EXA_API_KEY`. Keep it out of version
@@ -62,7 +68,8 @@ The runtime needs Node, Python 3.11+, uvx on PATH, subprocess support, and outbo
 access to selected providers. Prewarm the pinned package during container setup
 to download Python dependencies before serving requests. The client connects lazily
 when agent tools are requested; its default process hooks disconnect on shutdown.
-Embedded hosts managing their own shutdown should call `disconnectWebRouter()`.
+If the host manages shutdown itself, set `registerProcessHooks: false` on the
+`MCPClient` and call `disconnectWebRouter()` from the host's shutdown handler.
 
 A successful JavaScript build does not package Python or prove a managed platform
 supports subprocesses. Use a local machine or a container/VM with these prerequisites;
