@@ -143,7 +143,7 @@ citation coverage, comparative latency and total cost have not been measured.
 | Concurrent production startup | Both callers received the same cached tools |
 | Search, `exa-mcp` | 2 results, 1,176 ms |
 | Extract, `jina` | Same source URL, HTTP 200, 3,605 ms, truncated |
-| Automated tests and typecheck | 6 tests passed; typecheck passed |
+| Automated tests, typecheck and build | 6 tests passed; typecheck and build passed |
 | Paired agent citations, end-to-end latency and total cost | Not measured; Gateway credential required |
 
 Timings are one local tool call each, measured at the Mastra client after discovery.
