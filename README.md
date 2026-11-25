@@ -26,6 +26,10 @@ Ask things like:
 - "Compare pgvector HNSW vs IVFFlat indexes for cosine similarity."
 - "What changed in Node 22 LTS vs 20 LTS?"
 
+## Optional WebRouter search and page extraction
+
+Set `DOCS_WEB_PROVIDER=webrouter` to use the local Python MCP server for search and explicit page reads. Gateway remains the agent inference layer. See [setup and comparison](docs/webrouter.md) for prerequisites, credentials, deployment constraints, and a reproducible comparison with the default search.
+
 ## Making it yours
 
 - **Swap the model.** Change the agent model or the `web_search` tool's Gateway model independently. The tool calls Gateway's OpenRouter-compatible web-search server tool, so it does not need an OpenAI, Exa, or Tavily key.
