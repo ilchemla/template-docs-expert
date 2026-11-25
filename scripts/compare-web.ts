@@ -24,6 +24,16 @@ globalThis.fetch = async (input, init) => {
   return response;
 };
 
+function diagnostic(error: unknown) {
+  let message = error instanceof Error ? error.message : 'Unknown comparison error';
+  for (const [name, value] of Object.entries(process.env)) {
+    if (/KEY|TOKEN|SECRET|PASSWORD/i.test(name) && value && value.length >= 6) {
+      message = message.split(value).join('[redacted]');
+    }
+  }
+  return message.replace(/Bearer\s+\S+/gi, 'Bearer [redacted]').slice(0, 500);
+}
+
 try {
   for (const [index, question] of questions.entries()) {
     // Alternate order; each answer gets an agent without conversation memory.
@@ -32,9 +42,11 @@ try {
       gatewaySearchCalls = [];
       const start = performance.now();
       const metadata = { provider, model, question, timestamp: new Date().toISOString(), memory: false };
+      let stage = 'setup';
       try {
         const tools = await getDocsWebTools({ ...process.env, DOCS_WEB_PROVIDER: provider });
         const agent = new Agent({ id: `compare-${provider}`, name: 'Docs Expert', instructions, model, tools });
+        stage = 'inference';
         const result = await agent.generate(question, { maxSteps: 100 });
         console.log(JSON.stringify({
           ...metadata, latencyMs: Math.round(performance.now() - start), answer: result.text,
@@ -43,9 +55,10 @@ try {
           finishReason: result.finishReason,
           totalCostUsd: null, costStatus: 'Unavailable: reconcile model and web-provider billing separately.',
         }));
-      } catch {
+      } catch (error) {
+        process.exitCode = 1;
         console.log(JSON.stringify({ ...metadata, latencyMs: Math.round(performance.now() - start),
-          error: 'Run failed; inspect local Mastra traces and provider availability.', gatewaySearchCalls, totalCostUsd: null }));
+          stage, error: diagnostic(error), gatewaySearchCalls, totalCostUsd: null }));
       } finally {
         await disconnectWebRouter();
       }

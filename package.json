@@ -9,7 +9,7 @@
     "start": "mastra start",
     "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc",
-    "compare": "tsx --env-file=.env scripts/compare-web.ts"
+    "compare": "node --import tsx --env-file=.env scripts/compare-web.ts"
   },
   "keywords": [],
   "author": "",

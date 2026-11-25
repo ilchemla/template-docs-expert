@@ -4,6 +4,7 @@ import { createInterface } from 'node:readline';
 const tools = ['search', 'extract', 'load_env'].map(name => ({
   name,
   description: name,
+  outputSchema: { type: 'object', additionalProperties: true },
   inputSchema: { type: 'object', properties: { query: { type: 'string' }, urls: { type: 'array', items: { type: 'string' } } } },
 }));
 for await (const line of createInterface({ input: process.stdin })) {
@@ -18,9 +19,9 @@ for await (const line of createInterface({ input: process.stdin })) {
     const { name, arguments: args } = request.params;
     result = args.query === 'fail'
       ? { isError: true, content: [{ type: 'text', text: 'Provider unavailable' }] }
-      : { content: [{ type: 'text', text: JSON.stringify(name === 'search'
+      : { structuredContent: name === 'search'
         ? { results: [{ title: 'Example docs', url: 'https://example.com/docs', content: 'Use the documented API.' }] }
-        : { documents: [{ url: args.urls[0], content: 'Use the documented API.' }], failures: [] }) }] };
+        : { documents: [{ url: args.urls[0], content: 'Use the documented API.' }], failures: [] }, content: [] };
   } else if (request.method === 'ping') {
     result = {};
   } else {
