@@ -28,7 +28,7 @@ Ask things like:
 
 ## Optional WebRouter search and page extraction
 
-Set `DOCS_WEB_PROVIDER=webrouter` to use the local Python MCP server for search and explicit page reads. Gateway remains the agent inference layer. See [setup and comparison](docs/webrouter.md) for prerequisites, credentials, deployment constraints, and a reproducible comparison with the default search.
+**Local/container use only; Mastra Platform deployment is unverified.** Set `DOCS_WEB_PROVIDER=webrouter` to use the local Python MCP server for search and explicit page reads. Gateway remains the agent inference layer. See [setup and comparison](docs/webrouter.md) for prerequisites, credentials, deployment constraints, and a reproducible comparison with the default search.
 
 ## Making it yours
 

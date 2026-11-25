@@ -13,12 +13,14 @@ export async function discoverWebRouterTools(client: MCPClient) {
 }
 
 let client: MCPClient | undefined;
+let toolsPromise: ReturnType<typeof discoverWebRouterTools> | undefined;
 
 export async function getDocsWebTools(env: NodeJS.ProcessEnv = process.env) {
   const provider = env.DOCS_WEB_PROVIDER?.trim() || 'gateway';
   if (provider === 'gateway') return { web_search: webSearchTool };
   if (provider !== 'webrouter') throw new Error('DOCS_WEB_PROVIDER must be gateway or webrouter.');
-  client ??= new MCPClient({
+  if (toolsPromise) return toolsPromise;
+  const current = new MCPClient({
     id: 'docs-expert-webrouter',
     servers: {
       webrouter: {
@@ -32,16 +34,24 @@ export async function getDocsWebTools(env: NodeJS.ProcessEnv = process.env) {
       },
     },
   });
-  try {
-    return await discoverWebRouterTools(client);
-  } catch (error) {
-    await disconnectWebRouter();
+  client = current;
+  toolsPromise = discoverWebRouterTools(current).catch(async error => {
+    try {
+      await current.disconnect();
+    } finally {
+      if (client === current) {
+        client = undefined;
+        toolsPromise = undefined;
+      }
+    }
     throw error;
-  }
+  });
+  return toolsPromise;
 }
 
 export async function disconnectWebRouter() {
   const current = client;
   client = undefined;
+  toolsPromise = undefined;
   await current?.disconnect();
 }

@@ -1,4 +1,8 @@
 import { createInterface } from 'node:readline';
+import { appendFileSync, readFileSync } from 'node:fs';
+
+const traceArg = process.argv.indexOf('--trace-file');
+const traceFile = traceArg < 0 ? undefined : process.argv[traceArg + 1];
 
 // A deterministic MCP peer: no network, credentials, or Python required.
 const tools = ['search', 'extract', 'load_env'].map(name => ({
@@ -14,7 +18,13 @@ for await (const line of createInterface({ input: process.stdin })) {
   if (request.method === 'initialize') {
     result = { protocolVersion: '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'fixture', version: '1' } };
   } else if (request.method === 'tools/list') {
-    result = { tools: process.argv.includes('--missing-extract') ? tools.filter(t => t.name !== 'extract') : tools };
+    let missing = process.argv.includes('--missing-extract');
+    if (traceFile) {
+      appendFileSync(traceFile, 'list\n');
+      // Only the retry has a complete catalog; later rediscovery would break a live connection.
+      missing = readFileSync(traceFile, 'utf8').trim().split('\n').length !== 2;
+    }
+    result = { tools: missing ? tools.filter(t => t.name !== 'extract') : tools };
   } else if (request.method === 'tools/call') {
     const { name, arguments: args } = request.params;
     result = args.query === 'fail'
@@ -28,5 +38,7 @@ for await (const line of createInterface({ input: process.stdin })) {
     process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, error: { code: -32601, message: 'Method not found' } }) + '\n');
     continue;
   }
-  process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\n');
+  const reply = () => process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\n');
+  if (request.params?.arguments?.query === 'slow') setTimeout(reply, 50);
+  else reply();
 }

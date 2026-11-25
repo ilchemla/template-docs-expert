@@ -1,5 +1,7 @@
 # Optional WebRouter tools
 
+**Local/container integration. Mastra Platform deployment is unverified.**
+
 The default remains Gateway/OpenRouter search. Set `DOCS_WEB_PROVIDER=webrouter`
 to replace that tool with [WebRouter](https://github.com/Nimbleway/webrouter)
 search and explicit page extraction through its Python stdio MCP server.
@@ -67,7 +69,9 @@ This uses Mastra's [MCPClient stdio transport](https://mastra.ai/reference/tools
 The runtime needs Node, Python 3.11+, uvx on PATH, subprocess support, and outbound
 access to selected providers. Prewarm the pinned package during container setup
 to download Python dependencies before serving requests. The client connects lazily
-when agent tools are requested; its default process hooks disconnect on shutdown.
+when agent tools are requested. Concurrent requests share one discovery promise;
+successful discovery is cached until disconnect, and failed startup can be retried.
+Its default process hooks disconnect on shutdown.
 If the host manages shutdown itself, set `registerProcessHooks: false` on the
 `MCPClient` and call `disconnectWebRouter()` from the host's shutdown handler.
 
@@ -131,3 +135,18 @@ it does not establish model answer quality or complete-page retrieval.
 
 No Gateway credential was available for paired agent runs, so answer correctness,
 citation coverage, comparative latency and total cost have not been measured.
+
+### Local smoke results, 2026-11-25
+
+| Check | Result |
+| --- | --- |
+| Concurrent production startup | Both callers received the same cached tools |
+| Search, `exa-mcp` | 2 results, 1,176 ms |
+| Extract, `jina` | Same source URL, HTTP 200, 3,605 ms, truncated |
+| Automated tests and typecheck | 6 tests passed; typecheck passed |
+| Paired agent citations, end-to-end latency and total cost | Not measured; Gateway credential required |
+
+Timings are one local tool call each, measured at the Mastra client after discovery.
+They exclude package installation and startup, and are not an agent benchmark or
+an estimate of total cost. The source page was the official MCPClient reference
+at `https://mastra.ai/reference/tools/mcp-client`.
